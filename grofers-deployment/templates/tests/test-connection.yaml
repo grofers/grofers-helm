@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "grofers-deployment.fullname" . }}-test-connection"
+  labels:
+{{ include "grofers-deployment.labels" . | indent 4 }}
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args:  ['{{ include "grofers-deployment.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never
