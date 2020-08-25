@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "jenkins-jobmon.fullname" . }}
+  labels:
+    {{- include "jenkins-jobmon.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "jenkins-jobmon.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "jenkins-jobmon.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag}}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 9118
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+          - name: JENKINS_SERVER
+            value: {{ .Values.config.jenkinsServer }}
+          - name: JENKINS_USER
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.config.secretName }}
+                key: username
+          - name: JENKINS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.config.secretName }}
+                key: password
+
